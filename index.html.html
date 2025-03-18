@@ -1,0 +1,287 @@
+<!-- product-template.liquid -->
+<div class="product-page">
+  <div class="product-page__container">
+    <div class="product-page__gallery">
+      <div class="product-page__main-image">
+        <img src="{{ product.featured_image | img_url: '800x800', crop: 'center' }}" alt="{{ product.title }}" id="main-product-image">
+      </div>
+      <div class="product-page__thumbnails">
+        {% for image in product.images %}
+          <div class="product-page__thumbnail" onclick="document.getElementById('main-product-image').src='{{ image | img_url: '800x800', crop: 'center' }}'">
+            <img src="{{ image | img_url: '100x100', crop: 'center' }}" alt="{{ product.title }} - Image {{ forloop.index }}">
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    
+    <div class="product-page__details">
+      <h1 class="product-page__title">{{ product.title }}</h1>
+      <div class="product-page__price">{{ product.price | money }}</div>
+      
+      {% if product.available %}
+        <div class="product-page__availability product-page__availability--in-stock">
+          <i class="fas fa-check-circle"></i> In Stock
+        </div>
+      {% else %}
+        <div class="product-page__availability product-page__availability--out-of-stock">
+          <i class="fas fa-times-circle"></i> Out of Stock
+        </div>
+      {% endif %}
+      
+      <div class="product-page__description">
+        {{ product.description }}
+      </div>
+      
+      <form action="/cart/add" method="post" class="product-page__form">
+        <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+        
+        {% if product.has_only_default_variant == false %}
+          {% for option in product.options_with_values %}
+            <div class="product-page__option">
+              <label for="Option{{ option.position }}">{{ option.name }}</label>
+              <select name="options[{{ option.name }}]" id="Option{{ option.position }}" class="product-page__select">
+                {% for value in option.values %}
+                  <option value="{{ value }}">{{ value }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          {% endfor %}
+        {% endif %}
+        
+        <div class="product-page__quantity">
+          <label for="Quantity">Quantity</label>
+          <div class="product-page__quantity-selector">
+            <button type="button" class="product-page__quantity-btn" onclick="decrementQuantity()">-</button>
+            <input type="number" id="Quantity" name="quantity" value="1" min="1" class="product-page__quantity-input">
+            <button type="button" class="product-page__quantity-btn" onclick="incrementQuantity()">+</button>
+          </div>
+        </div>
+        
+        <button type="submit" class="product-page__add-to-cart {% unless product.available %}disabled{% endunless %}"
+                {% unless product.available %}disabled{% endunless %}>
+          {% if product.available %}
+            Add to Cart
+          {% else %}
+            Sold Out
+          {% endif %}
+        </button>
+      </form>
+      
+      <div class="product-page__features">
+        <div class="product-page__feature">
+          <i class="fas fa-shipping-fast"></i>
+          <div>
+            <h4>Fast Shipping</h4>
+            <p>2-5 business days delivery</p>
+          </div>
+        </div>
+        <div class="product-page__feature">
+          <i class="fas fa-undo"></i>
+          <div>
+            <h4>Easy Returns</h4>
+            <p>30-day money back guarantee</p>
+          </div>
+        </div>
+        <div class="product-page__feature">
+          <i class="fas fa-lock"></i>
+          <div>
+            <h4>Secure Checkout</h4>
+            <p>SSL encrypted payment</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="product-page__share">
+        <span>Share:</span>
+        <a href="#" class="product-page__share-link"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" class="product-page__share-link"><i class="fab fa-twitter"></i></a>
+        <a href="#" class="product-page__share-link"><i class="fab fa-pinterest-p"></i></a>
+        <a href="#" class="product-page__share-link"><i class="fab fa-instagram"></i></a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="product-page__tabs">
+    <div class="product-page__tab-buttons">
+      <button class="product-page__tab-button active" onclick="openTab(event, 'description')">Description</button>
+      <button class="product-page__tab-button" onclick="openTab(event, 'details')">Details</button>
+      <button class="product-page__tab-button" onclick="openTab(event, 'reviews')">Reviews</button>
+    </div>
+    
+    <div id="description" class="product-page__tab-content active">
+      <div class="product-page__tab-inner">
+        {{ product.description }}
+      </div>
+    </div>
+    
+    <div id="details" class="product-page__tab-content">
+      <div class="product-page__tab-inner">
+        <h3>Product Specifications</h3>
+        <table class="product-page__specs">
+          {% for tag in product.tags %}
+            {% if tag contains 'spec:' %}
+              {% assign spec = tag | remove: 'spec:' | split: '=' %}
+              <tr>
+                <td>{{ spec[0] }}</td>
+                <td>{{ spec[1] }}</td>
+              </tr>
+            {% endif %}
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+    
+    <div id="reviews" class="product-page__tab-content">
+      <div class="product-page__tab-inner">
+        <div id="shopify-product-reviews" data-id="{{ product.id }}">{{ product.metafields.spr.reviews }}</div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="product-page__related">
+    <h2 class="section-title">You May Also Like</h2>
+    <div class="products-grid">
+      {% for product in recommendations.products limit: 4 %}
+        <div class="product-card">
+          <img 
+            src="{{ product.featured_image | img_url: '400x400', crop: 'center' }}" 
+            alt="{{ product.title }}"
+            class="product-card__image"
+          >
+          <div class="product-card__content">
+            <h3 class="product-card__title">{{ product.title }}</h3>
+            <p class="product-card__price">{{ product.price | money }}</p>
+            <button class="product-card__button">View Product</button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Product Page Styles */
+  .product-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+  
+  .product-page__container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 60px;
+  }
+  
+  /* Product Gallery */
+  .product-page__gallery {
+    position: sticky;
+    top: 100px;
+  }
+  
+  .product-page__main-image {
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: var(--box-shadow);
+  }
+  
+  .product-page__main-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  
+  .product-page__thumbnails {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .product-page__thumbnail {
+    width: 80px;
+    height: 80px;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: var(--transition);
+  }
+  
+  .product-page__thumbnail:hover {
+    border-color: var(--accent-color);
+  }
+  
+  .product-page__thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* Product Details */
+  .product-page__title {
+    font-size: 2rem;
+    margin-bottom: 15px;
+    color: var(--primary-color);
+  }
+  
+  .product-page__price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-bottom: 15px;
+  }
+  
+  .product-page__availability {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  
+  .product-page__availability--in-stock {
+    background-color: rgba(39, 174, 96, 0.1);
+    color: #27ae60;
+  }
+  
+  .product-page__availability--out-of-stock {
+    background-color: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+  }
+  
+  .product-page__description {
+    margin-bottom: 30px;
+    line-height: 1.8;
+  }
+  
+  /* Product Form */
+  .product-page__form {
+    margin-bottom: 30px;
+  }
+  
+  .product-page__option {
+    margin-bottom: 20px;
+  }
+  
+  .product-page__option label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  
+  .product-page__select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    font-family: inherit;
+  }
+  
+  .product-page__quantity {
+    margin-bottom: 20px;
+  }
+  
+  .product-page__quantity label {
